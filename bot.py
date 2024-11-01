@@ -1,7 +1,7 @@
-import sqlite3
 import os
 import re
 import asyncio
+import db
 from telethon import TelegramClient
 from telethon import functions, events
 
@@ -16,7 +16,7 @@ channels_watched = []
 
 channel_username_to_message_filter = {}
 
-forward_to_username = "levabalasfeed"
+forward_channel_target_username = "levabalasfeed"
 
 assert api_id is not None and len(api_id) > 0, "API_ID must be set"
 assert api_hash is not None and len(api_hash) > 0, "API_HASH must be set"
@@ -41,8 +41,9 @@ async def user_message_handler(event):
     ):
         print("forwarding...")
         channel_destination = await user_client.get_entity(
-            "@" + forward_to_username
+            "@" + forward_channel_target_username
         )
+
         print("forwarding to", channel_destination.username)
 
         await user_client.forward_messages(
@@ -157,86 +158,17 @@ def stop_listening_to_channel(channel):
 
 
 def add_channel_to_watch(channel_username):
-    print(f"Adding channel {channel_username} to watch")
+    print(f"adding channel {channel_username} to watch")
     channels_usernames_to_watch.append(channel_username)
 
-    con = get_db_connection()
-    cur = con.cursor()
-
-    cur.execute(
-        "INSERT INTO channels_usernames_to_watch (username) VALUES (?)",
-        (channel_username,),
-    )
-    con.commit()
-    con.close()
-
-    print(f"Added channel {channel_username} to watch")
+    db.add_channel_to_watch(channel_username)
 
 
 def set_channel_message_filter(channel_username, filter_regex):
     print(f"Setting filter {filter_regex} for channel {channel_username}")
     channel_username_to_message_filter[channel_username] = filter_regex
 
-    con = get_db_connection()
-    cur = con.cursor()
-
-    cur.execute(
-        "INSERT OR REPLACE INTO channel_to_message_filter (username, filter) VALUES (?, ?)",
-        (channel_username, filter_regex),
-    )
-    con.commit()
-    con.close()
-
-    print(f"Set filter {filter_regex} for channel {channel_username}")
-
-
-def get_db_connection():
-    con = sqlite3.connect("channels.db")
-
-    return con
-
-
-def setup_db():
-    print("Setting up db")
-    con = get_db_connection()
-    cur = con.cursor()
-
-    channels_usernames_to_watch
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS channels_usernames_to_watch (username TEXT PRIMARY KEY)"
-    )
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS channel_to_message_filter (username TEXT PRIMARY KEY, filter TEXT)"
-    )
-
-    con.close()
-    print("Done setting up db")
-
-
-def read_db_to_local_state():
-    print("Reading db to local state")
-    con = get_db_connection()
-    cur = con.cursor()
-
-    resUsernamesToWatch = cur.execute(
-        "SELECT username FROM channels_usernames_to_watch"
-    ).fetchall()
-
-    global channels_usernames_to_watch
-    channels_usernames_to_watch = [row[0] for row in resUsernamesToWatch]
-
-    resFilters = cur.execute(
-        "SELECT username, filter FROM channel_to_message_filter"
-    ).fetchall()
-
-    global channel_username_to_message_filter
-    channel_username_to_message_filter = {row[0]: row[1] for row in resFilters}
-
-    con.close()
-    print("Done reading db to local state")
-
-    print(f"Channels to watch: {channels_usernames_to_watch}")
-    print(f"Channel filters: {channel_username_to_message_filter}")
+    db.set_channel_message_filter(channel_username, filter_regex)
 
 
 async def main():
@@ -294,13 +226,17 @@ async def run_both_clients():
     bot_client.add_event_handler(bot_message_handler, events.NewMessage)
 
     try:
-        setup_db()
-        read_db_to_local_state()
+        global channel_username_to_message_filter
+        global channels_usernames_to_watch
+        db.setup_db()
+
+        channels_usernames_to_watch, channel_username_to_message_filter = (
+            db.read_db_to_local_state()
+        )
 
         await asyncio.gather(
             main(),
             user_client.run_until_disconnected(),
-            # bot_client.run_until_disconnected(),
         )
     finally:
         await user_client.disconnect()
