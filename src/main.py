@@ -8,6 +8,8 @@ from telethon import TelegramClient
 from telethon import functions, events, types
 
 
+session_name = os.environ.get("SESSION_NAME")
+
 api_id = os.environ.get("API_ID")
 api_hash = os.environ.get("API_HASH")
 bot_token = os.environ.get("BOT_TOKEN")
@@ -21,7 +23,7 @@ assert api_hash is not None and len(api_hash) > 0, "API_HASH must be set"
 assert bot_token is not None and len(bot_token) > 0, "BOT_TOKEN must be set"
 assert len(admin_usernames) > 0, "ADMIN_USERNAME must be set"
 
-user_client = TelegramClient("session_name", api_id, api_hash)
+user_client = TelegramClient(session_name, api_id, api_hash)
 bot_client = TelegramClient("bot", api_id, api_hash)
 
 if not os.path.exists(consts.DB_DIRECTORY):
