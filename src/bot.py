@@ -1,3 +1,4 @@
+from log import log
 import re
 import channel_utils
 import db as db_module
@@ -8,13 +9,13 @@ bots = []
 
 async def handle_user_message_for_bots(event):
     for bot in bots:
-        print(
+        log(
             f"{bot.name}|{event.message.peer_id.channel_id}|{[c.id for c in bot.channels_watched]}"
         )
         if event.message.peer_id.channel_id in [
             c.id for c in bot.channels_watched
         ]:
-            print("YES")
+            log("YES")
             await bot.user_message_handler(event)
 
 
@@ -43,20 +44,20 @@ class Bot:
             forward_channel_target_usernames
         )
 
-        print(f"Bot created {name}")
+        log(f"Bot created {name}")
         bots.append(self)
-        print([b.name for b in bots])
+        log([b.name for b in bots])
 
-        print(f"Channels to watch: {self.channels_usernames_to_watch}")
-        print(f"Channel filters: {self.channel_username_to_message_filter}")
-        print(
+        log(f"Channels to watch: {self.channels_usernames_to_watch}")
+        log(f"Channel filters: {self.channel_username_to_message_filter}")
+        log(
             f"Channel to forward to: {self.forward_channel_target_usernames}"
         )
 
     async def user_message_handler(self, event):
         channel = await self.user_client.get_entity(event.message.peer_id)
 
-        print(
+        log(
             f"New message in `{channel.username}`: {event.message.message[:100]}"
         )
 
@@ -64,13 +65,13 @@ class Bot:
             channel.username
         )
 
-        print(f"Test against filter {filter_regex}")
+        log(f"Test against filter {filter_regex}")
 
         if filter_regex and re.search(
             filter_regex,
             event.message.message,
         ):
-            print("forwarding to", self.forward_channel_target_usernames)
+            log("forwarding to", self.forward_channel_target_usernames)
 
             for (
                 forward_channel_target_username
@@ -79,7 +80,7 @@ class Bot:
                     "@" + forward_channel_target_username
                 )
 
-                print("forwarding to", channel_destination.username)
+                log("forwarding to", channel_destination.username)
 
                 await self.user_client.forward_messages(
                     channel_destination,
@@ -88,7 +89,7 @@ class Bot:
                 )
 
     def listen_to_channel(self, channel):
-        print(f"Listening to channel: {channel.title} {channel.id}")
+        log(f"Listening to channel: {channel.title} {channel.id}")
 
         self.user_client.add_event_handler(
             handle_user_message_for_bots,
@@ -97,10 +98,10 @@ class Bot:
 
         self.channels_watched.append(channel)
 
-        print(f"Channels watched: {self.channels_watched}")
+        log(f"Channels watched: {self.channels_watched}")
 
     def stop_listening_to_channel(self, channel):
-        print(f"Stopping listening to channel: {channel.title} {channel.id}")
+        log(f"Stopping listening to channel: {channel.title} {channel.id}")
         self.user_client.remove_event_handler(
             self.user_message_handler, events.NewMessage(chats=channel.id)
         )
@@ -108,24 +109,24 @@ class Bot:
             c for c in self.channels_watched if channel.id != channel.id
         ]
 
-        print(f"Channels watched: {self.channels_watched}")
+        log(f"Channels watched: {self.channels_watched}")
 
     def add_channel_to_watch(self, channel):
-        print(f"Adding channel {channel.username} to watch")
+        log(f"Adding channel {channel.username} to watch")
         self.channels_usernames_to_watch.append(channel.username)
 
         self.db.add_channel_to_watch(channel.username)
         self.listen_to_channel(channel)
 
     def remove_channel_to_watch(self, channel):
-        print(f"Removing channel {channel.username} to watch")
+        log(f"Removing channel {channel.username} to watch")
         self.channels_usernames_to_watch.remove(channel.username)
 
         self.db.remove_channel_to_watch(channel.username)
         self.stop_listening_to_channel(channel)
 
     def set_channel_message_filter(self, channel_username, filter_regex):
-        print(f"Setting filter {filter_regex} for channel {channel_username}")
+        log(f"Setting filter {filter_regex} for channel {channel_username}")
         self.channel_username_to_message_filter[channel_username] = (
             filter_regex
         )
@@ -133,13 +134,13 @@ class Bot:
         self.db.set_channel_message_filter(channel_username, filter_regex)
 
     def add_channel_to_forward_to(self, channel_username):
-        print(f"Adding channel {channel_username} to forward to")
+        log(f"Adding channel {channel_username} to forward to")
         self.forward_channel_target_usernames.append(channel_username)
 
         self.db.add_channel_forward_target(channel_username)
 
     def remove_channel_to_forward_to(self, channel_username):
-        print(f"Removing channel {channel_username} to forward to")
+        log(f"Removing channel {channel_username} to forward to")
         self.forward_channel_target_usernames.remove(channel_username)
 
         self.db.remove_channel_forward_target(channel_username)
@@ -177,15 +178,15 @@ class Bot:
         for channel in channels_to_listen:
             self.listen_to_channel(channel)
 
-        print("channels_usernames_to_watch", self.channels_usernames_to_watch)
-        print("channels_watched", [c.username for c in self.channels_watched])
-        print(
+        log("channels_usernames_to_watch", self.channels_usernames_to_watch)
+        log("channels_watched", [c.username for c in self.channels_watched])
+        log(
             "forward_channel_target_usernames",
             self.forward_channel_target_usernames,
         )
-        print(
+        log(
             "channel_username_to_message_filter",
             self.channel_username_to_message_filter,
         )
 
-        print("setup done")
+        log("setup done")

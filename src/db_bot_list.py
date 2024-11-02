@@ -1,3 +1,4 @@
+from log import log
 from collections import namedtuple
 import sqlite3
 
@@ -14,7 +15,7 @@ class DBBotList:
         return con
 
     def setup_db(self):
-        print("Setting up db bot list")
+        log("Setting up db bot list")
         con = self.get_db_connection()
         cur = con.cursor()
 
@@ -23,7 +24,7 @@ class DBBotList:
         )
 
         con.close()
-        print("Done setting up db bot list")
+        log("Done setting up db bot list")
 
     def get_bots_list(self):
         con = self.get_db_connection()
@@ -44,4 +45,4 @@ class DBBotList:
         con.commit()
         con.close()
 
-        print(f"Added bot {bot_config.name} to db bot list")
+        log(f"Added bot {bot_config.name} to db bot list")

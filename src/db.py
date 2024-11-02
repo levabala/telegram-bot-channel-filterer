@@ -1,3 +1,4 @@
+from log import log
 import sqlite3
 
 
@@ -16,7 +17,7 @@ class DB:
         con.commit()
         con.close()
 
-        print(f"Added channel {channel_username} to watch")
+        log(f"Added channel {channel_username} to watch")
 
     def remove_channel_to_watch(self, channel_username):
         con = self.get_db_connection()
@@ -29,7 +30,7 @@ class DB:
         con.commit()
         con.close()
 
-        print(f"Removed channel {channel_username} to watch")
+        log(f"Removed channel {channel_username} to watch")
 
     def set_channel_message_filter(self, channel_username, filter_regex):
         con = self.get_db_connection()
@@ -42,7 +43,7 @@ class DB:
         con.commit()
         con.close()
 
-        print(f"Set filter {filter_regex} for channel {channel_username}")
+        log(f"Set filter {filter_regex} for channel {channel_username}")
 
     def add_channel_forward_target(self, channel_username):
         con = self.get_db_connection()
@@ -55,7 +56,7 @@ class DB:
         con.commit()
         con.close()
 
-        print(f"Added channel {channel_username} to forward to")
+        log(f"Added channel {channel_username} to forward to")
 
     def remove_channel_forward_target(self, channel_username):
         con = self.get_db_connection()
@@ -68,7 +69,7 @@ class DB:
         con.commit()
         con.close()
 
-        print(f"Removed channel {channel_username} to forward to")
+        log(f"Removed channel {channel_username} to forward to")
 
     def get_db_connection(self):
         con = sqlite3.connect(self.db_name)
@@ -76,7 +77,7 @@ class DB:
         return con
 
     def setup_db(self):
-        print("Setting up db")
+        log("Setting up db")
         con = self.get_db_connection()
         cur = con.cursor()
 
@@ -91,10 +92,10 @@ class DB:
         )
 
         con.close()
-        print("Done setting up db")
+        log("Done setting up db")
 
     def read_db(self):
-        print("Reading db to local state")
+        log("Reading db to local state")
         con = self.get_db_connection()
         cur = con.cursor()
 
@@ -121,7 +122,7 @@ class DB:
         ]
 
         con.close()
-        print("Done reading db to local state")
+        log("Done reading db to local state")
 
         return (
             channels_usernames_to_watch,

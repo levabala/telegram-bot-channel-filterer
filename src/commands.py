@@ -1,3 +1,4 @@
+from log import log
 import consts
 import channel_utils
 import db_bot_list as db_bot_list_module
@@ -48,11 +49,11 @@ async def addChannelCommandHandler(
         await event.reply(f"Channel {channel_username} is already watched")
         return
 
-    print(f"Adding channel {channel_username}")
+    log(f"Adding channel {channel_username}")
     try:
         channel_entity = await user_client.get_entity("@" + channel_username)
     except Exception as e:
-        print(f"Error adding channel {channel_username}", e)
+        log(f"Error adding channel {channel_username}", e)
         await event.reply("Channel not found")
         return
 
@@ -73,7 +74,7 @@ async def deleteChannelCommandHandler(
     event, message, user_client, start_bot, sender_username, bot, bot_key
 ):
     channel_username = message.split(" ")[1]
-    print(f"Deleting channel {channel_username}")
+    log(f"Deleting channel {channel_username}")
 
     if channel_username not in bot.channels_usernames_to_watch:
         await event.reply(f"Channel {channel_username} is not watched")
@@ -82,7 +83,7 @@ async def deleteChannelCommandHandler(
     try:
         channel_entity = await user_client.get_entity("@" + channel_username)
     except Exception:
-        print(f"Error deleting channel {channel_username}")
+        log(f"Error deleting channel {channel_username}")
         await event.reply("Channel not found")
         return
 
@@ -187,11 +188,11 @@ async def addChannelToForwardToCommandHandler(
         )
         return
 
-    print(f"Adding channel to forward to{channel_username}")
+    log(f"Adding channel to forward to{channel_username}")
     try:
         channel_entity = await user_client.get_entity("@" + channel_username)
     except Exception as e:
-        print(f"Error adding channel {channel_username}", e)
+        log(f"Error adding channel {channel_username}", e)
         await event.reply("Channel not found")
         return
 
@@ -221,11 +222,11 @@ async def removeChannelToForwardToCommandHandler(
         )
         return
 
-    print(f"Removing channel to forward to{channel_username}")
+    log(f"Removing channel to forward to{channel_username}")
     try:
         channel_entity = await user_client.get_entity("@" + channel_username)
     except Exception:
-        print(f"Error deleting channel {channel_username}")
+        log(f"Error deleting channel {channel_username}")
         await event.reply("Channel not found")
         return
 

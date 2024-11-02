@@ -1,3 +1,4 @@
+from log import log
 import os
 import asyncio
 import commands as commands_module
@@ -16,7 +17,7 @@ bot_token = os.environ.get("BOT_TOKEN")
 
 admin_usernames = os.environ.get("ADMIN_USERNAME").split(",")
 
-print(f"Admin usernames: {admin_usernames}")
+log(f"Admin usernames: {admin_usernames}")
 
 assert api_id is not None and len(api_id) > 0, "API_ID must be set"
 assert api_hash is not None and len(api_hash) > 0, "API_HASH must be set"
@@ -29,14 +30,14 @@ bot_client = TelegramClient("bot", api_id, api_hash)
 if not os.path.exists(consts.DB_DIRECTORY):
     os.makedirs(consts.DB_DIRECTORY)
 
-print(f"{consts.DB_DIRECTORY}/bots.db")
+log(f"{consts.DB_DIRECTORY}/bots.db")
 
 db_bot_list = db_bot_list_module.DBBotList(f"{consts.DB_DIRECTORY}/bots.db")
 db_bot_list.setup_db()
 
 bot_list = db_bot_list.get_bots_list()
 
-print(f"Bots list: {bot_list}")
+log(f"Bots list: {bot_list}")
 
 
 routines_to_run = []
@@ -48,7 +49,7 @@ def get_bot_key(sender_username):
 
 
 async def start_bot(bot_config, dialogs):
-    print(f"Starting bot {bot_config.name}")
+    log(f"Starting bot {bot_config.name}")
 
     bot = bot_module.Bot(bot_config.name, bot_config.db_name, user_client)
 
@@ -77,7 +78,7 @@ async def set_commands():
         for command in commands_list
     ]
 
-    print(f"Bot commands count: {len(bot_commands)}")
+    log(f"Bot commands count: {len(bot_commands)}")
 
     await bot_client(
         functions.bots.SetBotCommandsRequest(
@@ -93,7 +94,7 @@ async def bot_message_handler(event):
     message = event.message.message
     sender_username = sender.username
 
-    print(f"New message from {sender_username}: {message}")
+    log(f"New message from {sender_username}: {message}")
 
     if sender.username not in admin_usernames:
         await event.reply("hui")
@@ -122,7 +123,7 @@ async def bot_message_handler(event):
             await event.reply("no bot exists for you")
             return
 
-        print(f"Processed by: {bot.name}")
+        log(f"Processed by: {bot.name}")
 
         for command in commands_list:
             if message_command == command.name:
@@ -131,7 +132,7 @@ async def bot_message_handler(event):
 
         await event.reply("Unknown command")
     except Exception as e:
-        print(f"Error handling command {message}")
+        log(f"Error handling command {message}")
         await event.reply("Error handling command")
 
         raise e
@@ -151,7 +152,7 @@ async def run_bots():
 
     channels = [dialog.entity for dialog in dialogs if dialog.is_channel]
     for channel in channels:
-        print(
+        log(
             f"Channel: {channel.title} - "
             f"Username: {channel.username} - "
             f"ID: {channel.id}"
@@ -165,8 +166,8 @@ async def run_bots():
         for bot_config in bot_list:
             await start_bot(bot_config, dialogs)
 
-        print("Bots initialized")
-        print(f"Bots: {bots}")
+        log("Bots initialized")
+        log(f"Bots: {bots}")
 
         while routines_to_run:
             temp = routines_to_run
