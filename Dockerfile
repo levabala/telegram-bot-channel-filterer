@@ -2,7 +2,7 @@ FROM python:3.13
 
 ADD requirements.txt *.session /
 ADD src /src
-ADD dbs /dbs
+VOLUME /dbs
 
 RUN pip3 install -r requirements.txt
 
