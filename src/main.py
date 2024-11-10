@@ -94,6 +94,10 @@ async def bot_message_handler(event):
     message = event.message.message
     sender_username = sender.username
 
+    if sender.bot:
+        log(f"Ignoring message from bot {sender.username}")
+        return
+
     log(f"New message from {sender_username}: {message}")
 
     if sender.username not in admin_usernames:
