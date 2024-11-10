@@ -1,3 +1,5 @@
+import argparse
+import shlex
 from log import log
 import consts
 import channel_utils
@@ -65,7 +67,7 @@ async def addChannelCommandHandler(
 
 addChannelCommand = Command(
     "/addchannel",
-    "Add channel to watch",
+    "Add channel to watch: [channel]",
     addChannelCommandHandler,
 )
 
@@ -95,7 +97,7 @@ async def deleteChannelCommandHandler(
 
 deleteChannelCommand = Command(
     "/deletechannel",
-    "Delete channel to watch",
+    "Delete channel to watch: [channel]",
     deleteChannelCommandHandler,
 )
 
@@ -118,7 +120,7 @@ async def listChannelsCommandHandler(
 
 listChannelsCommand = Command(
     "/listchannels",
-    "List channels to watch",
+    "List channels to watch: [channel]",
     listChannelsCommandHandler,
 )
 
@@ -145,7 +147,7 @@ async def setChannelMessageFilterCommandHandler(
 
 setChannelMessageFilterCommand = Command(
     "/setchannelfilter",
-    "Set channel message filter",
+    "Set channel message filter: [channel] [filter]",
     setChannelMessageFilterCommandHandler,
 )
 
@@ -168,7 +170,7 @@ async def listChannelFiltersCommandHandler(
 
 listChannelFiltersCommand = Command(
     "/listchannelfilters",
-    "List channel message filters",
+    "List channel message filters: [channel]",
     listChannelFiltersCommandHandler,
 )
 
@@ -190,7 +192,7 @@ async def addChannelToForwardToCommandHandler(
 
     log(f"Adding channel to forward to{channel_username}")
     try:
-        channel_entity = await user_client.get_entity("@" + channel_username)
+        await user_client.get_entity("@" + channel_username)
     except Exception as e:
         log(f"Error adding channel {channel_username}", e)
         await event.reply("Channel not found")
@@ -202,7 +204,7 @@ async def addChannelToForwardToCommandHandler(
 
 addChannelToForwardToCommand = Command(
     "/addchannelforwardto",
-    "Add channel to forward to",
+    "Add channel to forward to: [channel]",
     addChannelToForwardToCommandHandler,
 )
 
@@ -224,7 +226,7 @@ async def removeChannelToForwardToCommandHandler(
 
     log(f"Removing channel to forward to{channel_username}")
     try:
-        channel_entity = await user_client.get_entity("@" + channel_username)
+        await user_client.get_entity("@" + channel_username)
     except Exception:
         log(f"Error deleting channel {channel_username}")
         await event.reply("Channel not found")
@@ -236,7 +238,7 @@ async def removeChannelToForwardToCommandHandler(
 
 removeChannelToForwardToCommand = Command(
     "/removechannelforwardto",
-    "Remove channel to forward to",
+    "Remove channel to forward to: [channel]",
     removeChannelToForwardToCommandHandler,
 )
 
@@ -259,9 +261,44 @@ async def listChannelsToForwardToCommandHandler(
 
 listChannelsToForwardToCommand = Command(
     "/listchannelsforwardto",
-    "List channels to forward to",
+    "List channels to forward to: [channel]",
     listChannelsToForwardToCommandHandler,
 )
+
+
+async def updateChannelReactionsThresholdCommandHandler(
+    event, message, user_client, start_bot, sender_username, bot, bot_key
+):
+    args = shlex.split(message)[1:]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("channel", type=str, help="Channel username without @")
+    parser.add_argument(
+        "threshold",
+        type=int,
+        help="Threshold of reactions count",
+    )
+
+    try:
+        parsed_args = parser.parse_args(args)
+    except Exception as e:
+        await event.reply(f"Error parsing arguments: {e}")
+        return
+
+    bot.update_channel_reactions_threshold(
+        parsed_args.channel, parsed_args.threshold
+    )
+    await event.reply(
+        f"Reactions threshold for channel {parsed_args.channel} set to {parsed_args.threshold}"
+    )
+
+
+updateChannelReactionsThresholdCommand = Command(
+    "/updatechannelreactionsthreshold",
+    "Update channel reactions threshold (-1 to disable): [channel] [threshold]",
+    updateChannelReactionsThresholdCommandHandler,
+)
+
 
 commands_dict = {
     "initbot": initBotCommand,
@@ -273,4 +310,5 @@ commands_dict = {
     "addchannelforwardto": addChannelToForwardToCommand,
     "removechannelforwardto": removeChannelToForwardToCommand,
     "listchannelsforwardto": listChannelsToForwardToCommand,
+    "updatechannelreactionsthreshold": updateChannelReactionsThresholdCommand,
 }

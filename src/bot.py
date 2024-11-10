@@ -4,6 +4,14 @@ import channel_utils
 import db as db_module
 from telethon import events
 
+reactions_fetching_ranges_seconds = [
+    60 * 10,
+    60 * 60,
+    60 * 60 * 5,
+    60 * 60 * 10,
+    60 * 60 * 15,
+    60 * 60 * 24,
+]
 bots = []
 
 
@@ -25,6 +33,7 @@ class Bot:
         self.channels_watched = []
         self.forward_channel_target_usernames = []
         self.channel_username_to_message_filter = {}
+        self.channel_username_to_reactions_threshold = {}
 
         self.user_client = user_client
         self.name = name
@@ -35,7 +44,9 @@ class Bot:
             channels_usernames_to_watch,
             channel_username_to_message_filter,
             forward_channel_target_usernames,
+            channel_username_to_reactions_threshold,
         ) = self.db.read_db()
+
         self.channels_usernames_to_watch = channels_usernames_to_watch
         self.channel_username_to_message_filter = (
             channel_username_to_message_filter
@@ -44,15 +55,17 @@ class Bot:
             forward_channel_target_usernames
         )
 
+        self.channel_username_to_reactions_threshold = (
+            channel_username_to_reactions_threshold
+        )
+
         log(f"Bot created {name}")
         bots.append(self)
         log([b.name for b in bots])
 
         log(f"Channels to watch: {self.channels_usernames_to_watch}")
         log(f"Channel filters: {self.channel_username_to_message_filter}")
-        log(
-            f"Channel to forward to: {self.forward_channel_target_usernames}"
-        )
+        log(f"Channel to forward to: {self.forward_channel_target_usernames}")
 
     async def user_message_handler(self, event):
         channel = await self.user_client.get_entity(event.message.peer_id)
@@ -144,6 +157,16 @@ class Bot:
         self.forward_channel_target_usernames.remove(channel_username)
 
         self.db.remove_channel_forward_target(channel_username)
+
+    def update_channel_reactions_threshold(self, channel_username, threshold):
+        log(
+            f"Updating reactions threshold {threshold} for channel {channel_username}"
+        )
+        self.channel_username_to_reactions_threshold[channel_username] = (
+            threshold
+        )
+
+        self.db.update_channel_reactions_threshold(channel_username, threshold)
 
     async def init(self, dialogs):
         assert (

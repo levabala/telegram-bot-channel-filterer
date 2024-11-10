@@ -71,6 +71,23 @@ class DB:
 
         log(f"Removed channel {channel_username} to forward to")
 
+    def update_channel_reactions_threshold(
+        self, channel_username, threshold
+    ):
+        con = self.get_db_connection()
+        cur = con.cursor()
+
+        cur.execute(
+            "INSERT OR REPLACE INTO channel_to_reactions_threshold (username, threshold) VALUES (?, ?)",
+            (channel_username, threshold),
+        )
+        con.commit()
+        con.close()
+
+        log(
+            f"Updated reactions threshold {threshold} for channel {channel_username}"
+        )
+
     def get_db_connection(self):
         con = sqlite3.connect(self.db_name)
 
@@ -89,6 +106,9 @@ class DB:
         )
         cur.execute(
             "CREATE TABLE IF NOT EXISTS forward_target_usernames (username TEXT PRIMARY KEY)"
+        )
+        cur.execute(
+            "CREATE TABLE IF NOT EXISTS channel_to_reactions_threshold (username TEXT PRIMARY KEY, threshold INTEGER)"
         )
 
         con.close()
@@ -121,6 +141,14 @@ class DB:
             row[0] for row in resForwardTargets
         ]
 
+        resReactionsThresholds = cur.execute(
+            "SELECT username, threshold FROM channel_to_reactions_threshold"
+        ).fetchall()
+
+        channel_username_to_reactions_threshold = {
+            row[0]: row[1] for row in resReactionsThresholds
+        }
+
         con.close()
         log("Done reading db to local state")
 
@@ -128,4 +156,5 @@ class DB:
             channels_usernames_to_watch,
             channel_username_to_message_filter,
             forward_channel_target_usernames,
+            channel_username_to_reactions_threshold,
         )

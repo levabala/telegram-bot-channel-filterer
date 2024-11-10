@@ -150,6 +150,9 @@ async def run_bots():
 
     await set_commands()
 
+    messages = await user_client.get_messages('@svtvnews', limit=10)
+    print(messages)
+
     bot_client.add_event_handler(bot_message_handler, events.NewMessage)
 
     dialogs = await user_client.get_dialogs()
